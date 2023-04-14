@@ -11,7 +11,7 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Constraint(validatedBy = UserProfileCommandValidator.class)
 public @interface ValidUserProfileCommand {
-    String message() default "Invalid command type";
+    String message() default "Incorrect command. Please examine the request";
     Class<?>[] groups() default {};
     Class<? extends Payload>[] payload() default {};
 }

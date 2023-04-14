@@ -11,6 +11,7 @@ import javax.ws.rs.*;
 import javax.ws.rs.Path;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -57,6 +58,40 @@ public class UserResource {
             return Response.serverError().build();
         }
     }
+
+    @Path("commands")
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response processCommands(List<UserProfileCommand> commands) {
+        ValidatorFactory validatorFactory = Validation.buildDefaultValidatorFactory();
+        Validator validator = validatorFactory.getValidator();
+        StringBuilder errorMessages = new StringBuilder();
+
+        for (UserProfileCommand command : commands) {
+            Set<ConstraintViolation<UserProfileCommand>> violations = validator.validate(command);
+            if (!violations.isEmpty()) {
+                String message = violations.stream()
+                        .map(ConstraintViolation::getMessage)
+                        .collect(Collectors.joining("; "));
+                errorMessages.append(message).append("; ");
+            } else {
+                try {
+                    userProfileService.processCommands(command);
+                } catch (Exception e) {
+                    errorMessages.append("Error processing command: ").append(e.getMessage()).append("; ");
+                }
+            }
+        }
+
+        if (errorMessages.length() > 0) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(errorMessages.toString())
+                    .build();
+        } else {
+            return Response.noContent().build();
+        }
+    }
+
 
 
 }
