@@ -35,7 +35,7 @@ public class UserResource {
     public Response processCommands(UserProfileCommand command) {
         try {
             userProfileService.processCommands(command);
-            return Response.ok().build();
+            return Response.noContent().build();
         } catch (Exception e) {
             return Response.serverError().build();
 

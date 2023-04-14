@@ -26,6 +26,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+
+
 @TestDropwizardApp(value = UserProfileApiApplication.class, randomPorts = true)
 class UserProfileServiceTest {
     private final UserProfileDao userProfileDaoMock = mock(UserProfileDao.class);
@@ -78,6 +80,21 @@ class UserProfileServiceTest {
         }
 
 
+        @Test
+        void not_valid(UserProfileService userProfileService, UserProfileDao userProfileDao) {
+            String userId = "de4310e5-b139-441a-99db-77c9c4a5fada";
+            Map<UserProfilePropertyName, UserProfilePropertyValue> theUserProperties = new HashMap<>();
+            theUserProperties.put(UserProfilePropertyName.valueOf("currentGold"), UserProfilePropertyValue.valueOf(200));
+            UserProfile newUserProfile  = new UserProfile(UserId.valueOf(userId), LocalDateTime.MAX.toInstant(ZoneOffset.UTC), theUserProperties);
+
+            userProfileDao.put(newUserProfile);
+
+
+            UserProfileCommand command = new UserProfileCommand();
+
+
+            assertThrows(IllegalArgumentException.class, () -> command.setType("newProperty"));
+        }
         @Test
         void increment(UserProfileService userProfileService, UserProfileDao userProfileDao) {
             String userId = "de4310e5-b139-441a-99db-77c9c4a5fada";
@@ -208,20 +225,6 @@ class UserProfileServiceTest {
         }
 
 
-        @Test
-        void not_valid(UserProfileService userProfileService, UserProfileDao userProfileDao) {
-            String userId = "de4310e5-b139-441a-99db-77c9c4a5fada";
-            Map<UserProfilePropertyName, UserProfilePropertyValue> theUserProperties = new HashMap<>();
-            theUserProperties.put(UserProfilePropertyName.valueOf("currentGold"), UserProfilePropertyValue.valueOf(200));
-            UserProfile newUserProfile  = new UserProfile(UserId.valueOf(userId), LocalDateTime.MAX.toInstant(ZoneOffset.UTC), theUserProperties);
 
-            userProfileDao.put(newUserProfile);
-
-
-            UserProfileCommand command = new UserProfileCommand();
-
-
-            assertThrows(IllegalArgumentException.class, () -> command.setType("newProperty"));
-        }
     }
 }

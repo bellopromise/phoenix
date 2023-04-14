@@ -5,11 +5,14 @@ import com.google.inject.Provides;
 import com.google.inject.Singleton;
 
 import com.spotlight.platform.userprofile.api.core.profile.persistence.UserProfileDao;
+import com.spotlight.platform.userprofile.api.dtos.UserProfileCommand;
 import com.spotlight.platform.userprofile.api.model.profile.UserProfile;
 import com.spotlight.platform.userprofile.api.model.profile.primitives.UserId;
 import com.spotlight.platform.userprofile.api.model.profile.primitives.UserProfileFixtures;
 import com.spotlight.platform.userprofile.api.web.UserProfileApiApplication;
 
+
+import net.minidev.json.JSONObject;
 import org.eclipse.jetty.http.HttpStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -19,12 +22,19 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 
+import java.util.HashMap;
 import java.util.Optional;
 
 import ru.vyarus.dropwizard.guice.test.ClientSupport;
 import ru.vyarus.dropwizard.guice.test.jupiter.ext.TestDropwizardAppExtension;
 
+import javax.ws.rs.ProcessingException;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.core.Response;
+import javax.json.*;
+
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
+import static net.javacrumbs.jsonunit.assertj.JsonAssertions.json;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -95,5 +105,52 @@ class UserResourceIntegrationTest {
 
             assertThat(response.getStatus()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR_500);
         }
+
+
     }
+    @Nested
+    @DisplayName("updateUserProfile")
+    class UpdateUserProfile {
+
+        private static final String USER_ID = "de4310e5-b139-441a-99db-77c9c4a5fada";
+
+        private static final String URL = "/users/%s/profile/command".formatted(USER_ID);;
+
+
+        @Test
+        void validInput_processCommands(ClientSupport client, UserProfileDao userProfileDao) {
+            userProfileDao.put(UserProfileFixtures.USER_PROFILE);
+
+
+            JSONObject jsonProperties = new JSONObject();
+            jsonProperties.put("battleFought", 10);
+            jsonProperties.put("questsNotCompleted", -1);
+
+            JSONObject payload = new JSONObject();
+            payload.put("userId", "de4310e5-b139-441a-99db-77c9c4a5fada");
+            payload.put("type", "increment");
+            payload.put("properties", jsonProperties);
+
+            try {
+                var response = client.targetRest()
+                        .path(URL)
+                        .request()
+                        .post(Entity.json(payload.toString()));
+
+
+                assertThat(response.getStatus()).isEqualTo(HttpStatus.NO_CONTENT_204);
+
+            } catch (ProcessingException e) {
+                // handle exception
+                Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                        .entity("Error processing request: " + e.getMessage())
+                        .build();
+            }
+
+            // Verify the updated UserProfile in the UserProfileDao
+        }
+
+
+    }
+
 }
