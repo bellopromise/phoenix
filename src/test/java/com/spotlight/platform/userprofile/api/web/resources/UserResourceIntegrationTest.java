@@ -31,7 +31,6 @@ import ru.vyarus.dropwizard.guice.test.jupiter.ext.TestDropwizardAppExtension;
 import javax.ws.rs.ProcessingException;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
-import javax.json.*;
 
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.json;
@@ -110,12 +109,70 @@ class UserResourceIntegrationTest {
     }
     @Nested
     @DisplayName("updateUserProfile")
-    class UpdateUserProfile {
+    class ProcessCommand {
+        private static final String USER_ID_PATH_PARAM = "de4310e5-b139-441a-99db-77c9c4a5fada";
 
-        private static final String USER_ID = "de4310e5-b139-441a-99db-77c9c4a5fada";
+        private static final String URL = "/users/%s/profile/command".formatted(USER_ID_PATH_PARAM);;
 
-        private static final String URL = "/users/%s/profile/command".formatted(USER_ID);;
+        @Test
+        void invalidInput_Type_returns400(ClientSupport client) {
+            JSONObject jsonProperties = new JSONObject();
+            jsonProperties.put("battleFought", 10);
+            jsonProperties.put("questsNotCompleted", -1);
 
+            JSONObject payload = new JSONObject();
+            payload.put("userId", "de4310e5-b139-441a-99db-77c9c4a5fada");
+            payload.put("type", "anyType");
+            payload.put("properties", jsonProperties);
+
+            var response = client.targetRest()
+                    .path(URL)
+                    .request()
+                    .post(Entity.json(payload.toString()));
+
+            assertThat(response.getStatus()).isEqualTo(HttpStatus.BAD_REQUEST_400);
+        }
+
+        @Test
+        void invalidInput_collect_returns400(ClientSupport client) {
+
+            JSONObject jsonProperties = new JSONObject();
+            jsonProperties.put("inventory", "newWeapon");
+
+            JSONObject payload = new JSONObject();
+            payload.put("userId", "de4310e5-b139-441a-99db-77c9c4a5fada");
+            payload.put("type", "collect");
+            payload.put("properties", jsonProperties);
+
+
+            var response = client.targetRest()
+                    .path(URL)
+                    .request()
+                    .post(Entity.json(payload.toString()));
+
+            assertThat(response.getStatus()).isEqualTo(HttpStatus.BAD_REQUEST_400);
+        }
+
+        @Test
+        void invalidInput_increment_returns400(ClientSupport client) {
+
+            JSONObject jsonProperties = new JSONObject();
+            jsonProperties.put("battleFought", 10);
+            jsonProperties.put("questsNotCompleted", "new");
+
+            JSONObject payload = new JSONObject();
+            payload.put("userId", "de4310e5-b139-441a-99db-77c9c4a5fada");
+            payload.put("type", "increment");
+            payload.put("properties", jsonProperties);
+
+
+            var response = client.targetRest()
+                    .path(URL)
+                    .request()
+                    .post(Entity.json(payload.toString()));
+
+            assertThat(response.getStatus()).isEqualTo(HttpStatus.BAD_REQUEST_400);
+        }
 
         @Test
         void validInput_processCommands(ClientSupport client, UserProfileDao userProfileDao) {
@@ -146,9 +203,8 @@ class UserResourceIntegrationTest {
                         .entity("Error processing request: " + e.getMessage())
                         .build();
             }
-
-            // Verify the updated UserProfile in the UserProfileDao
         }
+
 
 
     }

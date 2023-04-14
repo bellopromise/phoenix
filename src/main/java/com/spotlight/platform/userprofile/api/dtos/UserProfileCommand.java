@@ -4,15 +4,22 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.spotlight.platform.userprofile.api.model.profile.primitives.UserId;
+import com.spotlight.platform.userprofile.api.web.validation.ValidUserProfileCommand;
 
 import javax.validation.constraints.NotNull;
 import java.util.Map;
 
+@ValidUserProfileCommand
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class UserProfileCommand {
     private UserId userId;
+
     private CommandType type;
+
+
     private Map<String, Object> properties;
+
+
 
     public UserProfileCommand() {}
 
