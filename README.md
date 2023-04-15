@@ -140,3 +140,51 @@ java -jar ./build/libs/userprofile-api-1.0.0-SNAPSHOT.jar server
 ```shell
 curl http://localhost:8080/users/some-user-id/profile
 ```
+
+
+### Implementation example
+
+Get User Profile:
+```
+  path: /users/de4310e5-b139-441a-99db-77c9c4a5fada/profile
+  method: GET
+```
+
+Process command:
+```
+  path: /users/de4310e5-b139-441a-99db-77c9c4a5fada/profile/command
+  method: POST
+  Request Body: {
+    "userId": "de4310e5-b139-441a-99db-77c9c4a5fada",
+    "type": "increment",
+    "properties": {
+      "battleFought": 10,
+      "questsNotCompleted": -1
+    }
+  } 
+```
+
+Process batch of commands:
+```
+  path: /users/de4310e5-b139-441a-99db-77c9c4a5fada/profile/commands
+  method: POST
+  Request Body: [
+    {
+      "userId": "de4310e5-b139-441a-99db-77c9c4a5fada",
+      "type": "replace",
+      "properties": {
+          "battleFought": 8,
+          "questsNotCompleted": 21
+      }
+    },
+
+    {
+      "userId": "de4310e5-b139-441a-99db-77c9c4a5fada",
+      "type": "increment",
+      "properties": {
+        "battleFought": 10,
+        "questsNotCompleted": -1
+      }
+    }
+  ]
+```
