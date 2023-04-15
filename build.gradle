@@ -63,6 +63,7 @@ dependencies {
     implementation platform('io.dropwizard:dropwizard-bom:2.1.6')
     implementation 'io.dropwizard:dropwizard-testing'
     implementation 'ru.vyarus:dropwizard-guicey:5.7.1'
+    implementation 'io.dropwizard:dropwizard-core:2.0.20'
 
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.9.2'
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.2'
@@ -70,4 +71,6 @@ dependencies {
     testImplementation 'org.assertj:assertj-core:3.24.2'
     testImplementation 'net.javacrumbs.json-unit:json-unit:2.37.0'
     testImplementation 'net.javacrumbs.json-unit:json-unit-assertj:2.37.0'
+    testImplementation 'org.mockito:mockito-junit-jupiter:3.12.4'
+
 }

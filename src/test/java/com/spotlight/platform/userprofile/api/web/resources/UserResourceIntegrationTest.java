@@ -4,14 +4,18 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 
+import com.spotlight.platform.userprofile.api.core.profile.UserProfileService;
 import com.spotlight.platform.userprofile.api.core.profile.persistence.UserProfileDao;
 import com.spotlight.platform.userprofile.api.dtos.UserProfileCommand;
 import com.spotlight.platform.userprofile.api.model.profile.UserProfile;
 import com.spotlight.platform.userprofile.api.model.profile.primitives.UserId;
 import com.spotlight.platform.userprofile.api.model.profile.primitives.UserProfileFixtures;
+import com.spotlight.platform.userprofile.api.model.profile.primitives.UserProfilePropertyName;
+import com.spotlight.platform.userprofile.api.model.profile.primitives.UserProfilePropertyValue;
 import com.spotlight.platform.userprofile.api.web.UserProfileApiApplication;
 
 
+import net.minidev.json.JSONArray;
 import net.minidev.json.JSONObject;
 import org.eclipse.jetty.http.HttpStatus;
 import org.junit.jupiter.api.BeforeEach;
@@ -35,6 +39,7 @@ import javax.ws.rs.core.Response;
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.json;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
@@ -108,11 +113,12 @@ class UserResourceIntegrationTest {
 
     }
     @Nested
-    @DisplayName("updateUserProfile")
+    @DisplayName("Process Command(s)")
     class ProcessCommand {
-        private static final String USER_ID_PATH_PARAM = "de4310e5-b139-441a-99db-77c9c4a5fada";
 
+        private static final String USER_ID_PATH_PARAM = "de4310e5-b139-441a-99db-77c9c4a5fada";
         private static final String URL = "/users/%s/profile/command".formatted(USER_ID_PATH_PARAM);;
+        private static final String BATCH_URL = "/users/%s/profile/commands".formatted(USER_ID_PATH_PARAM);;
 
         @Test
         void invalidInput_Type_returns400(ClientSupport client) {
@@ -205,6 +211,91 @@ class UserResourceIntegrationTest {
             }
         }
 
+        @Test
+        void validInput_processCommandsBatch(ClientSupport client, UserProfileDao userProfileDao) {
+            userProfileDao.put(UserProfileFixtures.USER_PROFILE);
+
+            JSONArray commandList = new JSONArray();
+
+            JSONObject command1 = new JSONObject();
+            JSONObject properties1 = new JSONObject();
+            properties1.put("battleFought", 10);
+            properties1.put("questsNotCompleted", -1);
+            command1.put("userId", "de4310e5-b139-441a-99db-77c9c4a5fada");
+            command1.put("type", "replace");
+            command1.put("properties", properties1);
+
+            JSONObject command2 = new JSONObject();
+            JSONObject properties2 = new JSONObject();
+            properties2.put("battleFought", 8);
+            properties2.put("questsNotCompleted", 10);
+            command2.put("userId", "de4310e5-b139-441a-99db-77c9c4a5fada");
+            command2.put("type", "increment");
+            command2.put("properties", properties2);
+
+            commandList.add(command1);
+            commandList.add(command2);
+
+            try {
+                var response = client.targetRest()
+                        .path(BATCH_URL)
+                        .request()
+                        .post(Entity.json(commandList.toString()));
+
+
+                assertThat(response.getStatus()).isEqualTo(HttpStatus.NO_CONTENT_204);
+
+            } catch (ProcessingException e) {
+                // handle exception
+                Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                        .entity("Error processing request: " + e.getMessage())
+                        .build();
+            }
+        }
+
+        @Test
+        void not_validInput_processCommandsBatch(ClientSupport client, UserProfileDao userProfileDao) {
+            userProfileDao.put(UserProfileFixtures.USER_PROFILE);
+
+            JSONArray commandList = new JSONArray();
+
+            JSONObject command1 = new JSONObject();
+            JSONObject properties1 = new JSONObject();
+            properties1.put("battleFought", 10);
+            properties1.put("questsNotCompleted", -1);
+            command1.put("userId", "de4310e5-b139-441a-99db-77c9c4a5fada");
+            command1.put("type", "replace");
+            command1.put("properties", properties1);
+
+            JSONObject command2 = new JSONObject();
+            JSONObject properties2 = new JSONObject();
+            properties2.put("battleFought", "new");
+            properties2.put("questsNotCompleted", 10);
+            command2.put("userId", "de4310e5-b139-441a-99db-77c9c4a5fada");
+            command2.put("type", "increment");
+            command2.put("properties", properties2);
+
+
+
+            commandList.add(command1);
+            commandList.add(command2);
+
+            try {
+                var response = client.targetRest()
+                        .path(BATCH_URL)
+                        .request()
+                        .post(Entity.json(commandList.toString()));
+
+
+                assertThat(response.getStatus()).isEqualTo(HttpStatus.BAD_REQUEST_400);
+
+            } catch (ProcessingException e) {
+                // handle exception
+                Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                        .entity("Error processing request: " + e.getMessage())
+                        .build();
+            }
+        }
 
 
     }

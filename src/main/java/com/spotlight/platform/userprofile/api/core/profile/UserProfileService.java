@@ -30,6 +30,9 @@ public class UserProfileService {
     }
 
     public void processCommands(UserProfileCommand command) {
+        if(command.getUserId().toString() == ""){
+            throw new IllegalArgumentException();
+        }
         Optional<UserProfile> userProfile = userProfileDao.get(UserId.valueOf(command.getUserId().toString()));
         if(!userProfile.isPresent())
         {
@@ -84,8 +87,7 @@ public class UserProfileService {
             }
 
             if (!(currentValue.getValue() instanceof Number)) {
-                // handle invalid property value
-                continue;
+                throw new IllegalArgumentException();
             }
 
             Number value = (Number) entry.getValue();
@@ -118,9 +120,9 @@ public class UserProfileService {
             }
 
             if (!(currentValue.getValue() instanceof List<?>)) {
-                // handle invalid property value
-                continue;
+                throw new IllegalArgumentException();
             }
+
 
             @SuppressWarnings("unchecked")
             List<?> value = (List<?>) entry.getValue();
